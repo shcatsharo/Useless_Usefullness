@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    AIR SYNTH - CYBERPUNK STYLES (Watermelon UI Inspired)
    ========================================================================== */
 
@@ -30,6 +30,19 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Dynamic Stress-Relieving Background Canvas
+   -------------------------------------------------------------------------- */
+#bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -10;
+}
+
+/* --------------------------------------------------------------------------
    Watermelon UI Glowing Streaks & Glassmorphism
    -------------------------------------------------------------------------- */
 .cyber-glow {
@@ -40,30 +53,177 @@ body {
   box-shadow: 0 0 35px rgba(0, 240, 255, 0.45), 0 0 70px rgba(0, 240, 255, 0.15);
 }
 
-/* Subtle CRT Scanline overlay effect on Webcam canvas */
-.scanlines {
-  background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%, 
-    rgba(0, 240, 255, 0.03) 50%
-  );
-  background-size: 100% 4px;
-}
-
 /* --------------------------------------------------------------------------
    Webcam & Canvas Mirroring
    -------------------------------------------------------------------------- */
-/* Mirror the video and canvas so moving your hand feels natural (like a mirror) */
 #canvas {
   transform: scaleX(-1);
   display: block;
 }
 
 /* --------------------------------------------------------------------------
-   Pitch Bend Slider Glow & Transition
+   Mode Selector Sliding Pill Indicator
+   -------------------------------------------------------------------------- */
+#mode-sliding-pill {
+  transform: translateX(0);
+  background-color: rgba(6, 182, 212, 0.22);
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), 
+              background-color 0.35s ease, 
+              border-color 0.35s ease, 
+              box-shadow 0.35s ease;
+}
+
+#mode-sliding-pill.chaos {
+  transform: translateX(100%);
+  background-color: rgba(244, 63, 94, 0.28);
+  border-color: rgba(251, 113, 133, 0.5);
+  box-shadow: 0 0 22px rgba(244, 63, 94, 0.4);
+}
+
+#mode-toggle-container {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#mode-instrumental, #mode-chaos {
+  transition: color 0.3s ease, transform 0.15s ease;
+}
+
+#mode-instrumental:active, #mode-chaos:active {
+  transform: scale(0.96);
+}
+
+/* --------------------------------------------------------------------------
+   Pitch Bend Slider Glow & Ultra-Smooth Liquid Transition
    -------------------------------------------------------------------------- */
 #hud-bend-bar {
+  transition: left 0.12s cubic-bezier(0.1, 0.8, 0.3, 1), width 0.12s cubic-bezier(0.1, 0.8, 0.3, 1);
   box-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
   will-change: left, width;
+}
+
+/* Smooth Pitch Bend HUD Container Sliding & Fade */
+#hud-bend-container {
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+              max-height 0.35s ease;
+  max-height: 120px;
+}
+
+#hud-bend-container.hud-hidden {
+  opacity: 0 !important;
+  transform: translateY(16px) scale(0.96) !important;
+  pointer-events: none !important;
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin: 0 !important;
+  border-color: transparent !important;
+  overflow: hidden;
+}
+
+#status-pitch-container {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Hardware Toggles: Sustain & Pitch Lock (Active States & Micro-Interactions)
+   -------------------------------------------------------------------------- */
+#btn-sustain, #btn-pitch-lock {
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+#btn-sustain:hover, #btn-pitch-lock:hover {
+  transform: translateY(-1px);
+}
+
+#btn-sustain:active, #btn-pitch-lock:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+#btn-sustain #sustain-dot, #btn-pitch-lock #pitch-lock-dot {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#btn-sustain.active {
+  background-color: rgba(16, 185, 129, 0.18);
+  border-color: rgba(52, 211, 153, 0.5);
+  color: #a7f3d0;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+}
+
+#btn-sustain.active #sustain-dot {
+  background-color: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  transform: scale(1.2);
+}
+
+#btn-pitch-lock.active {
+  background-color: rgba(0, 240, 255, 0.18);
+  border-color: rgba(0, 240, 255, 0.5);
+  color: #a5f3fc;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+}
+
+#btn-pitch-lock.active #pitch-lock-dot {
+  background-color: #00f0ff;
+  box-shadow: 0 0 8px #00f0ff;
+  transform: scale(1.2);
+}
+
+#btn-pitch-lock.fixed-pitch {
+  background-color: rgba(245, 158, 11, 0.18);
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fde68a;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+
+#btn-pitch-lock.fixed-pitch #pitch-lock-dot {
+  background-color: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+  transform: scale(1.2);
+}
+
+/* --------------------------------------------------------------------------
+   Smooth Accordion Cheat-Sheet & Tab Cross-Fade
+   -------------------------------------------------------------------------- */
+#cheatsheet-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.3s ease-out, 
+              padding 0.3s ease;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#cheatsheet-content.expanded {
+  max-height: 600px;
+  opacity: 1;
+  padding-top: 0.75rem;
+  padding-bottom: 1rem;
+}
+
+#cheatsheet-chevron {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+}
+
+#cheatsheet-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Guide Tab Cross-Fade */
+.guide-tab-pane {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+
+.guide-tab-pane.active-tab {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* --------------------------------------------------------------------------
@@ -77,6 +237,22 @@ body {
 #flashbang-overlay.fading {
   opacity: 0 !important;
   transition: opacity 2.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* --------------------------------------------------------------------------
+   UwU Fullscreen Blush Animation (👉👈 Easter Egg)
+   -------------------------------------------------------------------------- */
+#uwu-overlay.active {
+  opacity: 1 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Chipi Chipi Chapa Chapa Indicator (🐱 Head Sway Easter Egg)
+   -------------------------------------------------------------------------- */
+#chipi-indicator.active {
+  opacity: 1 !important;
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.5);
 }
 
 /* --------------------------------------------------------------------------
@@ -97,16 +273,48 @@ body {
   animation: pulse-cyan 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Floating animation for subtle cyber badges */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
+/* --------------------------------------------------------------------------
+   Polaroid Flashbang Gallery Styles & Animations
+   -------------------------------------------------------------------------- */
+.polaroid-card {
+  will-change: transform;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+.polaroid-card:hover {
+  transform: scale(1.04) rotate(0deg) !important;
+  box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.8), 0 0 20px rgba(244, 63, 94, 0.25) !important;
+}
+
+@keyframes polaroid-drop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(-30px) rotate(12deg);
   }
-  50% {
-    transform: translateY(-4px);
+  60% {
+    opacity: 1;
+    transform: scale(1.06) translateY(4px) rotate(-4deg);
+  }
+  100% {
+    transform: scale(1) translateY(0) rotate(var(--polaroid-tilt, -2deg));
   }
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
+.polaroid-entry {
+  animation: polaroid-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+#gallery-grid::-webkit-scrollbar {
+  height: 6px;
+}
+#gallery-grid::-webkit-scrollbar-track {
+  background: rgba(13, 21, 39, 0.6);
+  border-radius: 9999px;
+}
+#gallery-grid::-webkit-scrollbar-thumb {
+  background: rgba(244, 63, 94, 0.3);
+  border-radius: 9999px;
+}
+#gallery-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(244, 63, 94, 0.6);
 }

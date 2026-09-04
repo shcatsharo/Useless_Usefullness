@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
@@ -44,9 +44,10 @@
   <!-- Tone.js for Web Audio Synthesis -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
-  <!-- MediaPipe Hands & Camera Utils -->
+  <!-- MediaPipe Hands, Face Detection & Camera Utils -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
 
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="style.css">
@@ -54,44 +55,72 @@
 
 <body class="bg-[#070b14] text-slate-100 font-sans min-h-screen relative overflow-x-hidden flex items-center justify-center p-3 sm:p-6 select-none">
 
-  <!-- Ambient Cyberpunk Background Glow (Watermelon UI Aesthetic) -->
-  <div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] sm:w-[900px] h-[450px] bg-cyan-500/15 blur-[120px] rotate-[-12deg] rounded-full"></div>
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,#070b14_85%)]"></div>
-  </div>
+  <!-- Dynamic Stress-Relieving Interactive Background Canvas -->
+  <canvas id="bg-canvas" class="fixed inset-0 pointer-events-none -z-10 w-full h-full"></canvas>
 
   <!-- Fullscreen Flashbang Whiteout Screen (Chaos Mode Easter Egg) -->
   <div id="flashbang-overlay" class="fixed inset-0 bg-white pointer-events-none z-50 opacity-0 transition-opacity duration-75"></div>
 
+  <!-- Fullscreen UwU Blush Overlay -->
+  <div id="uwu-overlay" class="fixed inset-0 bg-pink-500/20 backdrop-blur-[2px] pointer-events-none z-40 opacity-0 transition-opacity duration-300 flex items-center justify-center">
+    <div class="text-4xl sm:text-6xl font-black text-pink-300 drop-shadow-[0_0_25px_rgba(244,114,182,0.9)] animate-bounce font-mono">
+      👉👈 (uwu)
+    </div>
+  </div>
+
   <!-- Main Watermelon-Style Floating App Card -->
   <main class="relative w-full max-w-5xl backdrop-blur-2xl rounded-3xl sm:rounded-[36px] p-5 sm:p-8 shadow-2xl z-20
-               bg-[#0d1527]/85 border-[5px] sm:border-[8px] border-[#162540] shadow-cyan-950/50">
+               bg-[#0d1527]/90 border-[5px] sm:border-[8px] border-[#162540] shadow-cyan-950/60">
 
     <!-- Header Section -->
-    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-cyan-500/10">
+    <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-5 border-b border-cyan-500/10">
       <div>
-        <div class="flex items-center gap-3">
-          <div class="h-3 w-3 rounded-full bg-cyan-400 animate-ping"></div>
+        <div class="flex items-center gap-2.5">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400"></span>
+          </span>
           <span class="text-xs font-mono tracking-widest text-cyan-400 uppercase font-semibold">Motion Sound Synthesizer</span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1 flex items-center gap-2">
-          AIR SYNTH <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 font-mono">v1.0</span>
+          AIR SYNTH <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 font-mono">v1.2</span>
         </h1>
         <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-          Left hand selects instruments, right hand triggers musical notes, and horizontal wrist slides bend pitch in real-time.
+          Left hand selects sounds, right hand triggers notes, wrist slides pitch, and easter-egg gestures unlock meme magic.
         </p>
       </div>
 
-      <!-- Mode Selector Tabs (Watermelon Segmented Pill Style) -->
-      <div class="w-full sm:w-auto">
-        <div class="grid grid-cols-2 p-1 rounded-full bg-[#070b14] border border-cyan-500/20 relative shadow-inner">
-          <button id="mode-instrumental" class="relative z-10 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider transition-all duration-300 text-white bg-cyan-500/20 border border-cyan-400/40 shadow-lg shadow-cyan-500/20">
-            🎵 INSTRUMENTAL
+      <!-- Controls: Mode Selector & Hardware Toggles (Uniform 40px Height Alignment) -->
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto shrink-0">
+        
+        <!-- Hardware Toggles Group -->
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <!-- Sustain Button Toggle -->
+          <button id="btn-sustain" type="button" class="h-10 px-4 rounded-full text-xs font-mono font-semibold tracking-wider transition-all duration-300 border border-slate-700/80 bg-[#070b14] text-slate-400 hover:text-white flex items-center justify-center gap-2 shadow-sm cursor-pointer select-none">
+            <span id="sustain-dot" class="w-2 h-2 rounded-full bg-slate-600 transition-all"></span>
+            <span>SUSTAIN: <span id="sustain-status">OFF</span></span>
           </button>
-          <button id="mode-chaos" class="relative z-10 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider transition-all duration-300 text-slate-400 hover:text-slate-200">
-            🔥 CHAOS MODE
+
+          <!-- Pitch Mode Toggle: Freestyle vs Fixed -->
+          <button id="btn-pitch-lock" type="button" class="h-10 px-4 rounded-full text-xs font-mono font-semibold tracking-wider transition-all duration-300 border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:text-white flex items-center justify-center gap-2 shadow-sm active cursor-pointer select-none">
+            <span id="pitch-lock-dot" class="w-2 h-2 rounded-full bg-cyan-400 transition-all shadow-sm"></span>
+            <span>PITCH: <span id="pitch-lock-status">ON</span></span>
           </button>
         </div>
+
+        <!-- Mode Selector Tabs (Sliding Pill Segmented Control - Exact 40px Height) -->
+        <div id="mode-toggle-container" class="relative h-10 p-1 rounded-full bg-[#070b14] border border-cyan-500/20 shadow-inner flex items-center w-full sm:w-[290px] select-none overflow-hidden shrink-0">
+          <!-- Animated Sliding Pill Indicator -->
+          <div id="mode-sliding-pill" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full pointer-events-none"></div>
+          
+          <button id="mode-instrumental" type="button" class="relative z-10 flex-1 h-full px-3 rounded-full text-xs font-semibold tracking-wider transition-colors duration-300 text-white flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>🎵 INSTRUMENTAL</span>
+          </button>
+          <button id="mode-chaos" type="button" class="relative z-10 flex-1 h-full px-3 rounded-full text-xs font-semibold tracking-wider transition-colors duration-300 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>🔥 CHAOS MODE</span>
+          </button>
+        </div>
+
       </div>
     </header>
 
@@ -115,7 +144,7 @@
             </div>
             <h2 class="text-xl font-bold text-white mb-2">Enable Camera & Audio Engine</h2>
             <p class="text-xs sm:text-sm text-slate-400 max-w-sm mb-6 leading-relaxed">
-              AirSynth needs access to your webcam to track finger positions, plus WebAudio permissions to play sounds.
+              AirSynth needs access to your camera for gesture tracking, plus WebAudio permissions to play sounds.
             </p>
             <button id="start-btn" class="px-8 py-3.5 rounded-full text-sm font-bold bg-cyan-400 text-slate-950 hover:bg-cyan-300 active:scale-95 transition-all shadow-lg shadow-cyan-400/30 flex items-center gap-2">
               <i data-lucide="play" class="w-4 h-4 fill-current"></i>
@@ -131,7 +160,7 @@
               <!-- Left Hand Badge -->
               <div class="backdrop-blur-md bg-[#0d1527]/80 border border-cyan-500/30 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[11px] font-mono uppercase text-slate-400">LH Instrument:</span>
+                <span class="text-[11px] font-mono uppercase text-slate-400">LH Sound:</span>
                 <span id="hud-instrument" class="text-xs font-bold text-cyan-300 font-mono">1 • Grand Piano</span>
               </div>
 
@@ -143,8 +172,14 @@
               </div>
             </div>
 
-            <!-- Bottom HUD Bar: Arm Slide Pitch-Bend Meter -->
-            <div class="backdrop-blur-md bg-[#0d1527]/85 border border-cyan-500/30 px-4 py-2.5 rounded-2xl shadow-xl flex flex-col gap-1.5">
+            <!-- Chipi Chapa / Head Sway Floating Indicator -->
+            <div id="chipi-indicator" class="self-center backdrop-blur-md bg-amber-500/20 border border-amber-400/40 px-4 py-1.5 rounded-full flex items-center gap-2 opacity-0 transition-opacity duration-200">
+              <span class="text-sm">🐱</span>
+              <span class="text-xs font-bold text-amber-300 font-mono tracking-wider animate-pulse">CHIPI CHIPI CHAPA CHAPA!</span>
+            </div>
+
+            <!-- Bottom HUD Bar: Arm Slide Pitch-Bend Meter (Hidden in Chaos Mode) -->
+            <div id="hud-bend-container" class="backdrop-blur-md bg-[#0d1527]/85 border border-cyan-500/30 px-4 py-2.5 rounded-2xl shadow-xl flex flex-col gap-1.5 transition-all duration-300">
               <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
                 <span class="flex items-center gap-1"><i data-lucide="arrow-left" class="w-3 h-3"></i> Lower Pitch</span>
                 <span class="font-bold text-cyan-300 tracking-wider">ARM SLIDE PITCH BEND (<span id="hud-bend-val">0</span> cents)</span>
@@ -166,9 +201,37 @@
           </div>
           <div class="flex items-center gap-3">
             <span>Tracking FPS: <span id="status-fps" class="text-cyan-300">0</span></span>
-            <span>Pitch Drift: <span id="status-pitch" class="text-cyan-300">Neutral</span></span>
+            <span id="status-pitch-container">Pitch: <span id="status-pitch" class="text-cyan-300">Neutral</span></span>
           </div>
         </div>
+
+        <!-- Flashbang Hall of Fame / Polaroid Gallery Section -->
+        <section id="gallery-section" class="rounded-2xl p-4 bg-[#090e1a] border border-cyan-500/15 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-base">📸</span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-rose-300 font-mono flex items-center gap-2">
+                Flashbang Gallery
+              </h3>
+              <span id="gallery-count-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-rose-500/15 border border-rose-500/30 text-rose-300">
+                0 photos
+              </span>
+            </div>
+            <span class="text-[11px] font-mono text-slate-500 hidden sm:inline">
+              Session only (clears on reload)
+            </span>
+          </div>
+
+          <!-- Polaroid Grid / Horizontal Carousel -->
+          <div id="gallery-grid" class="flex gap-4 overflow-x-auto pb-3 pt-2 scrollbar-thin">
+            <!-- Empty state when no photos captured yet -->
+            <div id="gallery-empty-state" class="w-full py-8 text-center rounded-xl border border-dashed border-white/10 text-slate-500 text-xs font-mono flex flex-col items-center justify-center gap-2">
+              <span class="text-2xl">📸</span>
+              <span class="text-slate-400 font-semibold">No victims captured yet</span>
+              <span class="text-[11px] text-slate-500">Trigger a Flashbang (Fist ➡️ Palm in Chaos Mode) to snap someone in 4K!</span>
+            </div>
+          </div>
+        </section>
       </div>
 
       <!-- Controls & Quick Guide Sidebar (4 Columns) -->
@@ -203,46 +266,66 @@
           </div>
         </div>
 
-        <!-- Gesture Mapping Guide Tabs -->
-        <div class="rounded-2xl p-4 bg-[#090e1a] border border-cyan-500/15 space-y-2.5 flex-1">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i> Gesture Cheat-Sheet
-          </h3>
+        <!-- Gesture Mapping Guide Dropdown Accordion -->
+        <div class="rounded-2xl bg-[#090e1a] border border-cyan-500/15 overflow-hidden transition-all duration-300">
+          <!-- Dropdown Header Toggle Button -->
+          <button id="btn-toggle-cheatsheet" type="button" class="w-full p-4 flex items-center justify-between text-left hover:bg-cyan-500/5 transition-colors group cursor-pointer">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 group-hover:text-cyan-400 flex items-center gap-2 transition-colors">
+              <i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i>
+              <span>Gesture Cheat-Sheet</span>
+            </h3>
+            <div class="flex items-center gap-2">
+              <span id="cheatsheet-badge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 group-hover:bg-cyan-500/20 transition-colors">Expand</span>
+              <i id="cheatsheet-chevron" data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-hover:text-cyan-300 transition-transform duration-300"></i>
+            </div>
+          </button>
 
-          <div id="guide-instrumental" class="space-y-2 text-xs">
-            <div class="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider mt-2">Right Hand (Notes)</div>
-            <div class="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
-              <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">0: Fist → <span class="text-cyan-300 font-bold">A</span></div>
-              <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">1: Index → <span class="text-cyan-300 font-bold">B</span></div>
-              <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">2: Peace → <span class="text-cyan-300 font-bold">C</span></div>
-              <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">3: Three → <span class="text-cyan-300 font-bold">D</span></div>
-              <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">4: Four → <span class="text-cyan-300 font-bold">E</span></div>
-              <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">5: Palm → <span class="text-cyan-300 font-bold">F</span></div>
-              <div class="p-1.5 rounded bg-[#0d1527]/80 col-span-2 text-cyan-300 font-bold">👍 Hitchhiker Thumb → G</div>
+          <!-- Collapsible Dropdown Content -->
+          <div id="cheatsheet-content" class="px-4 space-y-2.5 border-t border-cyan-500/10">
+            <!-- Instrumental Mode Guide -->
+            <div id="guide-instrumental" class="guide-tab-pane active-tab space-y-2 text-xs">
+              <div class="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider mt-1">Right Hand (Notes)</div>
+              <div class="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
+                <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">0: Fist → <span class="text-cyan-300 font-bold">A</span></div>
+                <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">1: Index → <span class="text-cyan-300 font-bold">B</span></div>
+                <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">2: Peace → <span class="text-cyan-300 font-bold">C</span></div>
+                <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">3: Three → <span class="text-cyan-300 font-bold">D</span></div>
+                <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">4: Four → <span class="text-cyan-300 font-bold">E</span></div>
+                <div class="p-1.5 rounded bg-[#0d1527]/80 text-slate-300">5: Palm → <span class="text-cyan-300 font-bold">F</span></div>
+                <div class="p-1.5 rounded bg-[#0d1527]/80 col-span-2 text-cyan-300 font-bold">👍 Hitchhiker Thumb → G</div>
+              </div>
+
+              <div class="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider mt-3">Left Hand (Instruments)</div>
+              <ul class="space-y-1 text-[11px] text-slate-300 font-mono">
+                <li class="p-1 rounded bg-[#0d1527]/80">1 Finger: Grand Piano</li>
+                <li class="p-1 rounded bg-[#0d1527]/80">2 Fingers: Cello / Acoustic Guitar</li>
+                <li class="p-1 rounded bg-[#0d1527]/80">3 Fingers: Saxophone / Brass</li>
+                <li class="p-1 rounded bg-[#0d1527]/80">4 Fingers: Flute / Harp</li>
+                <li class="p-1 rounded bg-[#0d1527]/80">5 Fingers: Orchestral Pad</li>
+              </ul>
             </div>
 
-            <div class="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider mt-3">Left Hand (Instruments)</div>
-            <ul class="space-y-1 text-[11px] text-slate-300 font-mono">
-              <li class="p-1 rounded bg-[#0d1527]/80">1 Finger: Grand Piano</li>
-              <li class="p-1 rounded bg-[#0d1527]/80">2 Fingers: Cello / Acoustic Guitar</li>
-              <li class="p-1 rounded bg-[#0d1527]/80">3 Fingers: Saxophone / Brass</li>
-              <li class="p-1 rounded bg-[#0d1527]/80">4 Fingers: Flute / Harp</li>
-              <li class="p-1 rounded bg-[#0d1527]/80">5 Fingers: Orchestral Pad</li>
-            </ul>
-          </div>
+            <!-- Chaos Mode Guide with User-Specified Sounds & Easter Eggs -->
+            <div id="guide-chaos" class="guide-tab-pane space-y-2 text-xs hidden">
+              <div class="text-[11px] font-semibold text-rose-300 uppercase tracking-wider mt-1">Left Hand (Soundboard)</div>
+              <ul class="space-y-1 text-[11px] text-slate-300 font-mono">
+                <li class="p-1 rounded bg-[#0d1527]/80">1 Finger: Metal Pipe 💥</li>
+                <li class="p-1 rounded bg-[#0d1527]/80">2 Fingers: Yippee! 🎉</li>
+                <li class="p-1 rounded bg-[#0d1527]/80">3 Fingers: Explosion 💣</li>
+                <li class="p-1 rounded bg-[#0d1527]/80">4 Fingers: Huh? ❓</li>
+                <li class="p-1 rounded bg-[#0d1527]/80">5 Fingers: Mario Jump 🍄</li>
+              </ul>
 
-          <div id="guide-chaos" class="space-y-2 text-xs hidden">
-            <div class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-[11px]">
-              ⚠️ <strong>FLASHBANG TRAP:</strong> Open your right hand suddenly from Fist (0) to Full Palm (5) to detonate a blinding flashbang!
+              <div class="text-[11px] font-semibold text-amber-300 uppercase tracking-wider mt-2.5">✨ Secret Meme Triggers</div>
+              <ul class="space-y-1 text-[11px] text-slate-300 font-mono">
+                <li class="p-1.5 rounded bg-pink-500/10 border border-pink-500/20 text-pink-300">
+                  👉👈 <strong>Index Fingers Touch:</strong> Plays <em>UwU</em> + Blush!
+                </li>
+                <li class="p-1.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                  🐱 <strong>Head Sway Left & Right:</strong> Plays <em>Chipi Chipi Chapa Chapa</em>!
+                </li>
+              </ul>
             </div>
-            <div class="text-[11px] font-semibold text-rose-300 uppercase tracking-wider mt-2">Left Hand (Meme Soundboard)</div>
-            <ul class="space-y-1 text-[11px] text-slate-300 font-mono">
-              <li class="p-1 rounded bg-[#0d1527]/80">1: Heavy Airhorn 📢</li>
-              <li class="p-1 rounded bg-[#0d1527]/80">2: Cartoon Squeaky Toy 🐤</li>
-              <li class="p-1 rounded bg-[#0d1527]/80">3: Deep-Fried Explosion 💥</li>
-              <li class="p-1 rounded bg-[#0d1527]/80">4: Fhaaaaa... 😩</li>
-              <li class="p-1 rounded bg-[#0d1527]/80">5: Random Meme Sounds 🎲</li>
-            </ul>
           </div>
         </div>
 
@@ -256,7 +339,7 @@
         <span>Built with MediaPipe, Tone.js & Tailwind CSS</span>
       </div>
       <div class="font-mono text-[11px] text-slate-400">
-        Slide arm horizontally to bend pitch
+        Move mouse to stir calming ambient dust
       </div>
     </footer>
 

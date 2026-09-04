@@ -1,8 +1,9 @@
-﻿/**
- * AIR SYNTH - AUDIO SYNTHESIS & CHAOS SOUND ENGINE
- * Powered by Tone.js: Synthesizes 5 realistic musical instruments,
- * real-time arm-slide pitch bend, procedural Chaos meme sound effects,
- * and the CS:GO-style Flashbang audio shockwave.
+/**
+ * AIR SYNTH - AUDIO SYNTHESIS ENGINE
+ * Features dual acoustic profiles for all 5 instruments:
+ * - Sustained Profile: Sings & sustains as long as your finger is held up; cuts off cleanly when lowered or changed.
+ * - Sustainless Profile: Punchy, staccato, percussive plucks & hits that decay quickly even while held.
+ * - Instant cutoff when changing notes (no overlapping muddy chords).
  */
 
 export class AudioEngine {
@@ -12,9 +13,9 @@ export class AudioEngine {
     this.currentNote = null;
     this.currentCents = 0;
     this.isChaosMode = false;
-    this.memeIndex = 0;
+    this.isSustainOn = false;
+    this.isChipiPlaying = false;
 
-    // Scale note frequency mappings (A Minor / C Major natural tones)
     this.noteFrequencies = {
       'A': 'A3',
       'B': 'B3',
@@ -24,304 +25,261 @@ export class AudioEngine {
       'F': 'F4',
       'G': 'G4'
     };
+
+    // Custom meme sounds
+    this.customSounds = {
+      metalPipe: new Audio('sounds/Metal pipe.mp3'),
+      yippee: new Audio('sounds/yippee.mp3'),
+      explosion: new Audio('sounds/explosion.mp3'),
+      huh: new Audio('sounds/huh.mp3'),
+      marioJump: new Audio('sounds/Mario Jump.mp3'),
+      uwu: new Audio('sounds/uwu.mp3'),
+      chipiChapa: new Audio('sounds/Chipi Chipi Chapa Chapa.mp3'),
+      flashbang: new Audio('sounds/fahhhhh.mp3')
+    };
+
+    Object.values(this.customSounds).forEach(audio => {
+      audio.preload = 'auto';
+      audio.volume = 0.9;
+    });
   }
 
-  /**
-   * Initializes Tone.js AudioContext on user gesture.
-   */
   async init() {
     if (this.isInitialized) return;
 
     await Tone.start();
-    Tone.context.lookAhead = 0.03; // Ultra-low latency for motion control
+    Tone.context.lookAhead = 0.03;
 
-    // Master bus with Limiter to prevent clipping
     this.masterLimiter = new Tone.Limiter(-1).toDestination();
-    this.masterReverb = new Tone.Reverb({ decay: 2.2, preDelay: 0.01, wet: 0.25 }).connect(this.masterLimiter);
+    this.masterReverb = new Tone.Reverb({ decay: 2.0, preDelay: 0.01, wet: 0.2 }).connect(this.masterLimiter);
 
-    // Build the 5 Instrumental Synthesizers
-    this.buildInstruments();
+    // 1. Build Sustained Instruments (Note sustains continuously while finger is up)
+    this.buildSustainedInstruments();
 
-    // Build the Chaos Mode Generators
-    this.buildChaosGenerators();
+    // 2. Build Sustainless Instruments (Crisp staccato plucks & stabs)
+    this.buildSustainlessInstruments();
 
     this.isInitialized = true;
   }
 
   /**
-   * Synthesizer presets for the 5 instruments
+   * SUSTAINED PROFILES: Holds full tone while finger is up,
+   * releases cleanly when lowered.
    */
-  buildInstruments() {
-    // 1. Grand Piano: Multi-stage acoustic percussive envelope with warm harmonics
-    this.piano = new Tone.PolySynth(Tone.Synth, {
+  buildSustainedInstruments() {
+    // 1. Piano (Sustained grand piano)
+    const piano = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'triangle8' },
-      envelope: { attack: 0.005, decay: 1.5, sustain: 0.15, release: 1.2 }
+      envelope: { attack: 0.01, decay: 1.5, sustain: 0.75, release: 0.25 }
     }).connect(this.masterReverb);
-    this.piano.volume.value = 0;
+    piano.volume.value = 0;
 
-    // 2. Cello / Acoustic Guitar: Warm sawtooth with resonant lowpass filter envelope
-    this.cello = new Tone.PolySynth(Tone.MonoSynth, {
+    // 2. Cello / Acoustic Guitar (Rich bowed note holding long)
+    const cello = new Tone.PolySynth(Tone.MonoSynth, {
       oscillator: { type: 'sawtooth' },
-      filter: { Q: 3, type: 'lowpass', rolloff: -24 },
-      envelope: { attack: 0.08, decay: 0.8, sustain: 0.4, release: 0.9 },
-      filterEnvelope: { attack: 0.04, decay: 0.6, sustain: 0.3, release: 0.8, baseFrequency: 200, octaves: 3 }
+      filter: { Q: 2.5, type: 'lowpass', rolloff: -24 },
+      envelope: { attack: 0.06, decay: 1.2, sustain: 0.85, release: 0.3 },
+      filterEnvelope: { attack: 0.04, decay: 0.8, sustain: 0.6, release: 0.3, baseFrequency: 200, octaves: 3 }
     }).connect(this.masterReverb);
-    this.cello.volume.value = -3;
+    cello.volume.value = -3;
 
-    // 3. Saxophone / Brass: FM Synth with brassy harmonic bite
-    this.brass = new Tone.PolySynth(Tone.FMSynth, {
+    // 3. Saxophone / Brass (Continuous horn sustain)
+    const brass = new Tone.PolySynth(Tone.FMSynth, {
       harmonicity: 1.01,
       modulationIndex: 3.5,
       oscillator: { type: 'sawtooth' },
-      envelope: { attack: 0.05, decay: 0.4, sustain: 0.6, release: 0.4 },
+      envelope: { attack: 0.04, decay: 0.8, sustain: 0.85, release: 0.25 },
       modulation: { type: 'triangle' },
-      modulationEnvelope: { attack: 0.06, decay: 0.3, sustain: 0.3, release: 0.3 }
+      modulationEnvelope: { attack: 0.05, decay: 0.5, sustain: 0.6, release: 0.25 }
     }).connect(this.masterReverb);
-    this.brass.volume.value = -4;
+    brass.volume.value = -4;
 
-    // 4. Flute / Harp: Pure sine & subtle modulation with breathy release
-    this.flute = new Tone.PolySynth(Tone.AMSynth, {
+    // 4. Flute / Harp (Airy sustained woodwind)
+    const flute = new Tone.PolySynth(Tone.AMSynth, {
       harmonicity: 2.0,
       oscillator: { type: 'sine' },
-      envelope: { attack: 0.09, decay: 0.5, sustain: 0.7, release: 0.8 },
+      envelope: { attack: 0.06, decay: 0.8, sustain: 0.9, release: 0.25 },
       modulation: { type: 'sine' },
-      modulationEnvelope: { attack: 0.1, decay: 0.3, sustain: 0.5, release: 0.5 }
+      modulationEnvelope: { attack: 0.08, decay: 0.4, sustain: 0.6, release: 0.25 }
     }).connect(this.masterReverb);
-    this.flute.volume.value = -2;
+    flute.volume.value = -2;
 
-    // 5. Orchestral Strings: Lush, detuned ensemble pad
-    this.strings = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'fatsawtooth', count: 3, spread: 30 },
-      envelope: { attack: 0.25, decay: 1.0, sustain: 0.8, release: 1.5 }
+    // 5. Orchestral Strings (Lush ensemble holding as long as gesture is held)
+    const strings = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', count: 3, spread: 25 },
+      envelope: { attack: 0.12, decay: 1.2, sustain: 0.95, release: 0.35 }
     }).connect(this.masterReverb);
-    this.strings.volume.value = -5;
+    strings.volume.value = -5;
 
-    this.instruments = {
-      piano: this.piano,
-      cello: this.cello,
-      brass: this.brass,
-      flute: this.flute,
-      strings: this.strings
-    };
+    this.sustainedSynths = { piano, cello, brass, flute, strings };
   }
 
   /**
-   * Sound effect generators for Chaos Mode
+   * SUSTAINLESS PROFILES: Short, crisp, punchy staccato/pizzicato hits.
+   * Decays quickly even if finger stays up!
    */
-  buildChaosGenerators() {
-    // Heavy Airhorn Synthesizer (Triple detuned saws)
-    this.airhornSynth = new Tone.PolySynth(Tone.Synth, {
+  buildSustainlessInstruments() {
+    // 1. Piano Staccato (Tight, dampened key hit)
+    const piano = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle8' },
+      envelope: { attack: 0.005, decay: 0.25, sustain: 0.0, release: 0.05 }
+    }).connect(this.masterReverb);
+    piano.volume.value = 1;
+
+    // 2. Cello / Guitar Pizzicato (Dry, crisp finger pluck)
+    const cello = new Tone.PolySynth(Tone.MonoSynth, {
       oscillator: { type: 'sawtooth' },
-      envelope: { attack: 0.01, decay: 0.1, sustain: 0.9, release: 0.05 }
-    }).connect(this.masterLimiter);
-    this.airhornSynth.volume.value = 2;
-
-    // Cartoon Squeaky Toy Synth
-    this.squeakSynth = new Tone.Synth({
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.01, decay: 0.12, sustain: 0, release: 0.08 }
-    }).connect(this.masterLimiter);
-
-    // Deep Fried Explosion Generator (Distortion + Noise + Sub Drop)
-    this.distortion = new Tone.Distortion(0.9).connect(this.masterLimiter);
-    this.explosionNoise = new Tone.NoiseSynth({
-      noise: { type: 'brown' },
-      envelope: { attack: 0.005, decay: 1.2, sustain: 0, release: 0.4 }
-    }).connect(this.distortion);
-    this.subDrop = new Tone.MembraneSynth().connect(this.distortion);
-    this.subDrop.volume.value = 4;
-
-    // Flashbang Tinnitus Ring Synth (High-pitched ringing oscillator)
-    this.tinnitusRing = new Tone.Synth({
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.01, decay: 2.2, sustain: 0, release: 1.0 }
-    }).connect(this.masterLimiter);
-    this.tinnitusRing.volume.value = -6;
-
-    // Meme Roulette Bell/Bong Synth
-    this.memeSynth = new Tone.MetalSynth({
-      frequency: 220,
-      envelope: { attack: 0.001, decay: 1.4, release: 0.2 },
-      harmonicity: 4.1,
-      modulationIndex: 28,
-      resonance: 3500,
-      octaves: 1.5
+      filter: { Q: 3.5, type: 'lowpass', rolloff: -24 },
+      envelope: { attack: 0.01, decay: 0.2, sustain: 0.0, release: 0.05 },
+      filterEnvelope: { attack: 0.01, decay: 0.18, sustain: 0.0, release: 0.05, baseFrequency: 250, octaves: 2.5 }
     }).connect(this.masterReverb);
+    cello.volume.value = -2;
+
+    // 3. Brass Stab (Punchy, short trumpet jab)
+    const brass = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 1.01,
+      modulationIndex: 4.0,
+      oscillator: { type: 'sawtooth' },
+      envelope: { attack: 0.01, decay: 0.18, sustain: 0.0, release: 0.05 },
+      modulation: { type: 'triangle' },
+      modulationEnvelope: { attack: 0.01, decay: 0.15, sustain: 0.0, release: 0.05 }
+    }).connect(this.masterReverb);
+    brass.volume.value = -3;
+
+    // 4. Flute Pip (Short, breathy staccato pip)
+    const flute = new Tone.PolySynth(Tone.AMSynth, {
+      harmonicity: 2.0,
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.01, decay: 0.16, sustain: 0.0, release: 0.05 },
+      modulation: { type: 'sine' },
+      modulationEnvelope: { attack: 0.02, decay: 0.12, sustain: 0.0, release: 0.05 }
+    }).connect(this.masterReverb);
+    flute.volume.value = -1;
+
+    // 5. Strings Spiccato (Short, crisp orchestral chop)
+    const strings = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'fatsawtooth', count: 3, spread: 20 },
+      envelope: { attack: 0.02, decay: 0.25, sustain: 0.0, release: 0.06 }
+    }).connect(this.masterReverb);
+    strings.volume.value = -4;
+
+    this.sustainlessSynths = { piano, cello, brass, flute, strings };
   }
 
-  /**
-   * Sets active instrument for Left Hand
-   */
+  setSustain(isOn) {
+    if (this.isSustainOn !== isOn) {
+      this.releaseAll(); // Clean release on toggle
+      this.isSustainOn = isOn;
+    }
+  }
+
   setInstrument(instrumentId) {
-    if (this.instruments[instrumentId]) {
-      if (this.currentInstrument !== instrumentId) {
-        this.releaseAll();
-        this.currentInstrument = instrumentId;
-      }
+    if (this.currentInstrument !== instrumentId) {
+      this.releaseAll(); // Stop previous notes immediately on instrument change
+      this.currentInstrument = instrumentId;
     }
   }
 
   /**
-   * Gets currently active synth
+   * Returns active synth based on current instrument and Sustain toggle
    */
   getActiveSynth() {
-    return this.instruments[this.currentInstrument] || this.piano;
+    const synths = this.isSustainOn ? this.sustainedSynths : this.sustainlessSynths;
+    return (synths && synths[this.currentInstrument]) || (this.sustainedSynths && this.sustainedSynths.piano);
   }
 
   /**
-   * Plays or updates the active musical note from Right Hand
+   * Plays note: IMMEDIATELY stops previous note so no overlapping chords occur!
    */
   playNote(noteLetter) {
     if (!this.isInitialized || this.isChaosMode) return;
+
     if (!noteLetter || !this.noteFrequencies[noteLetter]) {
       this.releaseAll();
       return;
     }
 
     const pitch = this.noteFrequencies[noteLetter];
+    if (this.currentNote === pitch) return; // Keep sustaining current note
 
-    // If already playing this exact note, keep holding
-    if (this.currentNote === pitch) return;
-
+    // CRITICAL FIX: Cut off previous note completely before starting new note!
     this.releaseAll();
+
     const synth = this.getActiveSynth();
     synth.set({ detune: this.currentCents });
     synth.triggerAttack(pitch);
     this.currentNote = pitch;
   }
 
-  /**
-   * Updates pitch bend detune in real-time from horizontal wrist slide
-   */
   setPitchBend(cents) {
     this.currentCents = cents;
     if (!this.isInitialized) return;
-
     const synth = this.getActiveSynth();
     try {
-      synth.set({ detune: cents });
-    } catch (e) {
-      // Ignore rapid audio param updates
-    }
+      synth.set({ detune: this.currentCents });
+    } catch (e) {}
   }
 
   /**
-   * Stops all active notes smoothly
+   * Immediately stops all notes across all synths
    */
   releaseAll() {
     if (!this.isInitialized) return;
     try {
-      Object.values(this.instruments).forEach(synth => {
-        synth.releaseAll();
-      });
+      if (this.sustainedSynths) {
+        Object.values(this.sustainedSynths).forEach(s => s.releaseAll());
+      }
+      if (this.sustainlessSynths) {
+        Object.values(this.sustainlessSynths).forEach(s => s.releaseAll());
+      }
     } catch (e) {}
     this.currentNote = null;
   }
 
-  /**
-   * Triggers Chaos Mode Left Hand Sound Effects
-   */
+  playCustomAudio(soundKey) {
+    const audio = this.customSounds[soundKey];
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(e => console.warn('Audio play error:', e));
+    }
+  }
+
   playChaosSound(effectId) {
-    if (!this.isInitialized || !this.isChaosMode) return;
-    const now = Tone.now();
-
+    if (!this.isChaosMode) return;
     switch (effectId) {
-      case 'airhorn':
-        // Classic MLG rhythmic triple airhorn blast
-        const chord = ['F#5', 'A5', 'C6'];
-        this.airhornSynth.triggerAttackRelease(chord, '16n', now);
-        this.airhornSynth.triggerAttackRelease(chord, '16n', now + 0.12);
-        this.airhornSynth.triggerAttackRelease(chord, '8n', now + 0.25);
-        break;
-
-      case 'squeak':
-        // Squeaky toy pitch sweep
-        this.squeakSynth.triggerAttackRelease('C6', '16n', now);
-        this.squeakSynth.frequency.rampTo('F7', 0.08, now);
-        this.squeakSynth.frequency.rampTo('G5', 0.1, now + 0.08);
-        break;
-
-      case 'explosion':
-        // Deep fried bass boost explosion
-        this.explosionNoise.triggerAttackRelease('8n', now);
-        this.subDrop.triggerAttackRelease('C1', '2n', now, 1.0);
-        break;
-
-      case 'fhaaa':
-        // Dramatic failing vocal formant sigh
-        const sighSynth = new Tone.Synth({
-          oscillator: { type: 'sawtooth' },
-          envelope: { attack: 0.1, decay: 0.8, sustain: 0, release: 0.2 }
-        }).connect(this.masterLimiter);
-        sighSynth.triggerAttack('G3', now);
-        sighSynth.frequency.rampTo('C2', 0.7, now);
-        break;
-
-      case 'meme':
-        // Meme sound roulette
-        this.playMemeRoulette(now);
-        break;
+      case 'metalPipe': this.playCustomAudio('metalPipe'); break;
+      case 'yippee': this.playCustomAudio('yippee'); break;
+      case 'explosion': this.playCustomAudio('explosion'); break;
+      case 'huh': this.playCustomAudio('huh'); break;
+      case 'marioJump': this.playCustomAudio('marioJump'); break;
     }
   }
 
-  /**
-   * Plays a distinct procedural meme effect each time 5 fingers is shown
-   */
-  playMemeRoulette(now) {
-    const memeTypes = ['tacoBell', 'bruh', 'metalPipe', 'windowsDing', 'bonk'];
-    const chosen = memeTypes[this.memeIndex % memeTypes.length];
-    this.memeIndex++;
+  playUwU() {
+    this.playCustomAudio('uwu');
+  }
 
-    switch (chosen) {
-      case 'tacoBell':
-        // Taco Bell Bong
-        this.memeSynth.triggerAttackRelease('F#2', '1n', now);
-        break;
-
-      case 'bruh':
-        // Low pitched "Bruh" vocal sound
-        const bruh = new Tone.Synth({
-          oscillator: { type: 'sine' },
-          envelope: { attack: 0.05, decay: 0.35, sustain: 0.1, release: 0.2 }
-        }).connect(this.masterLimiter);
-        bruh.triggerAttackRelease('B1', '4n', now);
-        bruh.frequency.rampTo('G1', 0.25, now);
-        break;
-
-      case 'metalPipe':
-        // Metal Pipe Falling Clatter
-        this.memeSynth.triggerAttackRelease('C7', '16n', now, 0.9);
-        this.memeSynth.triggerAttackRelease('F6', '16n', now + 0.06, 0.7);
-        this.memeSynth.triggerAttackRelease('D6', '8n', now + 0.12, 0.8);
-        break;
-
-      case 'windowsDing':
-        // Error Ding
-        const ding = new Tone.PolySynth(Tone.Synth).connect(this.masterLimiter);
-        ding.triggerAttackRelease(['C#5', 'G#5', 'C#6'], '8n', now);
-        break;
-
-      case 'bonk':
-        // Cartoon Bonk
-        const bonk = new Tone.MembraneSynth({ pitchDecay: 0.05 }).connect(this.masterLimiter);
-        bonk.triggerAttackRelease('G4', '16n', now, 1.0);
-        bonk.frequency.rampTo('C2', 0.1, now);
-        break;
+  startChipiChapa() {
+    if (this.isChipiPlaying) return;
+    const chipi = this.customSounds.chipiChapa;
+    if (chipi) {
+      chipi.loop = true;
+      chipi.play().catch(e => console.warn(e));
+      this.isChipiPlaying = true;
     }
   }
 
-  /**
-   * CS:GO / COD Style FLASHBANG Shockwave + Tinnitus Ring!
-   */
+  stopChipiChapa() {
+    if (!this.isChipiPlaying) return;
+    const chipi = this.customSounds.chipiChapa;
+    if (chipi) {
+      chipi.pause();
+      chipi.currentTime = 0;
+      this.isChipiPlaying = false;
+    }
+  }
+
   triggerFlashbang() {
-    if (!this.isInitialized) return;
-    const now = Tone.now();
-
-    // 1. Massive concussive explosion blast
-    this.explosionNoise.triggerAttackRelease('4n', now, 1.0);
-    this.subDrop.triggerAttackRelease('A0', '1n', now, 1.0);
-
-    // 2. High-pitched deafening tinnitus ringing (3800Hz sine wave slowly fading)
-    this.tinnitusRing.triggerAttackRelease('3800', '2.5s', now + 0.05, 0.8);
+    this.playCustomAudio('flashbang');
   }
 }
