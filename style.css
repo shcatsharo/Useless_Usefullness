@@ -1,0 +1,112 @@
+﻿/* ==========================================================================
+   AIR SYNTH - CYBERPUNK STYLES (Watermelon UI Inspired)
+   ========================================================================== */
+
+/* Base Resets & Smooth Transitions */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #070b14;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+}
+
+/* Custom Cyberpunk Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #070b14;
+}
+::-webkit-scrollbar-thumb {
+  background: #162540;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00f0ff;
+}
+
+/* --------------------------------------------------------------------------
+   Watermelon UI Glowing Streaks & Glassmorphism
+   -------------------------------------------------------------------------- */
+.cyber-glow {
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.1);
+}
+
+.cyber-glow-strong {
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.45), 0 0 70px rgba(0, 240, 255, 0.15);
+}
+
+/* Subtle CRT Scanline overlay effect on Webcam canvas */
+.scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 240, 255, 0.03) 50%
+  );
+  background-size: 100% 4px;
+}
+
+/* --------------------------------------------------------------------------
+   Webcam & Canvas Mirroring
+   -------------------------------------------------------------------------- */
+/* Mirror the video and canvas so moving your hand feels natural (like a mirror) */
+#canvas {
+  transform: scaleX(-1);
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Pitch Bend Slider Glow & Transition
+   -------------------------------------------------------------------------- */
+#hud-bend-bar {
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+  will-change: left, width;
+}
+
+/* --------------------------------------------------------------------------
+   Flashbang Explosion Animation (Chaos Mode)
+   -------------------------------------------------------------------------- */
+#flashbang-overlay.active {
+  opacity: 1 !important;
+  transition: none !important;
+}
+
+#flashbang-overlay.fading {
+  opacity: 0 !important;
+  transition: opacity 2.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Keyframe Animations
+   -------------------------------------------------------------------------- */
+@keyframes pulse-cyan {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+}
+
+.animate-cyan-pulse {
+  animation: pulse-cyan 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Floating animation for subtle cyber badges */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
