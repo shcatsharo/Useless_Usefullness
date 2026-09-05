@@ -2,39 +2,35 @@
 
 
 
-# [Project Name] 🎯
+# [AIR SYNTH] 🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: [Vibesters]
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Team Lead: [Sharon Peter] - [Sahrdaya College of Advanced Studies]
+- Member 2: [Angelo Anish] - [Sahrdaya College of Advanced Studies]
 
 ### Project Description
-[2-3 lines about what your project does]
+[Its a Usefull while being compleatly useless kinda website that makes music using your Hand gestures and weird movements]
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+[There wasnt even a problem to start with....we just created new problems to make solutions]
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+[There are many ways we can play an instruments but we are making a website in a way no one asked for.....]
 
 ## Technical Details
 ### Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
+- [MediaPipe]
+- [Tone.js]
+- [TailwindCSS]
 
 For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
+- [Atleast a Mobile]
 
 ### Implementation
 For Software:
